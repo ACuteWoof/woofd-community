@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import {
   BrowserRouter as Router,
@@ -10,7 +10,6 @@ import {
 } from "react-router-dom";
 
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
@@ -25,7 +24,10 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { useCollectionData } from "react-firebase-hooks/firestore";
+import {
+  useCollectionData,
+  useDocumentData,
+} from "react-firebase-hooks/firestore";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -54,6 +56,7 @@ import AddIcon from "@mui/icons-material/Add";
 import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
+import CloseIcon from '@mui/icons-material/Close';
 
 const theme = createTheme({
   palette: {
@@ -100,10 +103,11 @@ const authProvider = new GoogleAuthProvider();
 
 function App() {
   const [user] = useAuthState(auth);
-  if (user) {
 
+  if (user) {
     return (
       <ThemeProvider theme={theme}>
+        <UserInintializer />
         <CssBaseline />
         <Router>
           <Routes>
@@ -116,8 +120,30 @@ function App() {
       </ThemeProvider>
     );
   } else {
-    return <SignInScreen />;
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SignInScreen />
+      </ThemeProvider>
+    );
   }
+}
+
+function UserInintializer() {
+  const [userObj] = useDocumentData(doc(db, `members/${auth.currentUser.uid}`), {
+    idField: "id",
+  });
+
+  useEffect(() => {
+    if (!userObj) {
+      setDoc(doc(db, "members", auth.currentUser.uid), {
+        name: auth.currentUser.displayName,
+        pfp: auth.currentUser.photoURL,
+      });
+    }
+  }, []);
+
+  return <></>;
 }
 
 function Home() {
@@ -130,7 +156,7 @@ function Home() {
 
 function HomeContent() {
   const postsRef = collection(db, "posts");
-const q = query(postsRef, orderBy("time", "desc"), limit(50))
+  const q = query(postsRef, orderBy("time", "desc"), limit(50));
   const [posts] = useCollectionData(q, { idField: "id" });
 
   return (
@@ -167,7 +193,7 @@ function PostCreator() {
       title: title,
       content: content,
       authorName: auth.currentUser.displayName,
-      authorPfp:  auth.currentUser.photoURL,
+      authorPfp: auth.currentUser.photoURL,
       time: Timestamp.now(),
     });
     setEnabled(false);
@@ -253,41 +279,77 @@ function PostCreator() {
 function ContentCard(props) {
   const { title, content, authorName, authorPfp, time } = props;
   return (
-    <Card sx={{ my: 3 }}>
-      <CardContent sx={{ p: 3 }}>
-        <Typography gutterBottom variant="h5" component="h2">
-          {title}
-        </Typography>
-        <br />
-        <Typography variant="body2" color="textSecondary" component="p">
-          {content}
-        </Typography>
-        <br />
-        <Stack direction="row" spacing={1}>
-          <Chip
-            avatar={<Avatar alt="avatar" src={authorPfp} />}
-            label={authorName}
-            color="primary"
-          />
-          <Chip label={time} color="primary" variant="outlined" />
-        </Stack>
-      </CardContent>
-    </Card>
+    <>
+      <Card sx={{ my: 3 }}>
+        <CardContent sx={{ p: 3 }}>
+          <Typography gutterBottom variant="h5" component="h2">
+            {title}
+          </Typography>
+          <br />
+          <Typography variant="body2" color="textSecondary" component="p">
+            {content}
+          </Typography>
+          <br />
+          <Stack direction="row" spacing={1}>
+            <Chip
+              avatar={<Avatar alt="avatar" src={authorPfp} />}
+              label={authorName}
+              color="primary"
+            />
+            <Chip label={time} color="primary" variant="outlined" />
+          </Stack>
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
 function Members() {
   return (
     <>
-      <ResponsiveDrawer content={<h1>In The Works</h1>} />
+      <ResponsiveDrawer title="Members" content={<MembersContent />} />
     </>
+  );
+}
+
+function MembersContent() {
+  const membersRef = collection(db, "members");
+  const q = membersRef;
+  const [members] = useCollectionData(q, { idField: "id" });
+
+   return (
+    <Container>
+	   {
+		   members && members.map((member) => (
+			   <MemberCard
+				   key={member.id}
+				   name={member.name}
+				   pfp={member.pfp}
+			   />
+		   ))
+	   }
+    </Container>
+  );
+}
+
+function MemberCard(props) {
+  const { name, pfp } = props;
+  return (
+    <Card sx={{ my: 3 }}>
+      <Box sx={{ p: 2, display: "flex" }}>
+        <Stack spacing={2} direction="row">
+          <Avatar src={pfp} sx={{ width: 69, height: 69 }} />
+          <Typography fontWeight={700}>{name}</Typography>
+        </Stack>
+      </Box>
+    </Card>
   );
 }
 
 function About() {
   return (
     <>
-      <ResponsiveDrawer content={<h1>In The Works</h1>} />
+      <ResponsiveDrawer content={<p>I'll write about Woofverse when I feel like it</p>} />
     </>
   );
 }
@@ -325,7 +387,11 @@ function ResponsiveDrawer(props) {
 
   const drawer = (
     <div>
-      <Toolbar />
+      <Toolbar>
+	<Typography variant="h6" gutterBottom>
+	  Woofverse
+	</Typography>
+	  </Toolbar>
       <Divider />
       <List>
         <ListItem button component={Link} href="./">
@@ -367,9 +433,12 @@ function ResponsiveDrawer(props) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}  >
             {title}
           </Typography>
+	  <Button variant="outlined" size="small" color="error" onClick={() => auth.signOut()} startIcon={<CloseIcon />}>
+	  Sign Out
+	  </Button>
         </Toolbar>
       </AppBar>
       <Box
