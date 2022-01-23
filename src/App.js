@@ -55,8 +55,6 @@ import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
 
-import "./index.css";
-
 const theme = createTheme({
   palette: {
     mode: "dark",
