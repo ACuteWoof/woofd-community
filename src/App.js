@@ -20,10 +20,7 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import {
-  useCollectionData,
-  useDocumentData,
-} from "react-firebase-hooks/firestore";
+import { useCollectionData } from "react-firebase-hooks/firestore";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -129,12 +126,27 @@ function App() {
 
 function UserInintializer() {
   useEffect(() => {
-      setDoc(doc(db, "members", auth.currentUser.uid), {
+    if (auth.currentUser.uid === "ATLdbZiL1pSHx0PG3JAc9o6Zveq1") {
+      setDoc(
+        doc(db, "members", auth.currentUser.uid),
+        {
+          name: auth.currentUser.displayName,
+          pfp: auth.currentUser.photoURL,
+          role: "Admin",
+        },
+        { merge: true }
+      );
+    }
+    setDoc(
+      doc(db, "members", auth.currentUser.uid),
+      {
         name: auth.currentUser.displayName,
         pfp: auth.currentUser.photoURL,
-      }, {merge: true});
+      },
+      { merge: true }
+    );
     // eslint-disable-next-line
-  }, []);
+  }, [auth]);
 
   return <></>;
 }
@@ -333,7 +345,8 @@ function MemberCard(props) {
     if (role === "Admin") {
       setColor("success");
     } else {
-      role = "Member"
+      // eslint-disable-next-line
+      role = "Member";
       setColor("primary");
     }
   }, [role]);
