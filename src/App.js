@@ -2,12 +2,7 @@ import * as React from "react";
 
 import { useState, useEffect } from "react";
 
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  useParams,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import { initializeApp } from "firebase/app";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -56,7 +51,7 @@ import AddIcon from "@mui/icons-material/Add";
 import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
 
 const theme = createTheme({
   palette: {
@@ -96,7 +91,7 @@ const firebaseConfig = {
   measurementId: "G-TYRZ214QW4",
 };
 
-const app = initializeApp(firebaseConfig);
+initializeApp(firebaseConfig);
 const db = getFirestore();
 const auth = getAuth();
 const authProvider = new GoogleAuthProvider();
@@ -130,7 +125,8 @@ function App() {
 }
 
 function UserInintializer() {
-  const [userObj] = useDocumentData(doc(db, `members/${auth.currentUser.uid}`), {
+  let userObj;
+  [userObj] = useDocumentData(doc(db, `members/${auth.currentUser.uid}`), {
     idField: "id",
   });
 
@@ -141,6 +137,7 @@ function UserInintializer() {
         pfp: auth.currentUser.photoURL,
       });
     }
+    // eslint-disable-next-line
   }, []);
 
   return <></>;
@@ -317,17 +314,12 @@ function MembersContent() {
   const q = membersRef;
   const [members] = useCollectionData(q, { idField: "id" });
 
-   return (
+  return (
     <Container>
-	   {
-		   members && members.map((member) => (
-			   <MemberCard
-				   key={member.id}
-				   name={member.name}
-				   pfp={member.pfp}
-			   />
-		   ))
-	   }
+      {members &&
+        members.map((member) => (
+          <MemberCard key={member.id} name={member.name} pfp={member.pfp} />
+        ))}
     </Container>
   );
 }
@@ -349,7 +341,9 @@ function MemberCard(props) {
 function About() {
   return (
     <>
-      <ResponsiveDrawer content={<p>I'll write about Woofverse when I feel like it</p>} />
+      <ResponsiveDrawer
+        content={<p>I'll write about Woofverse when I feel like it</p>}
+      />
     </>
   );
 }
@@ -388,10 +382,10 @@ function ResponsiveDrawer(props) {
   const drawer = (
     <div>
       <Toolbar>
-	<Typography variant="h6" gutterBottom>
-	  Woofverse
-	</Typography>
-	  </Toolbar>
+        <Typography variant="h6" gutterBottom>
+          Woofverse
+        </Typography>
+      </Toolbar>
       <Divider />
       <List>
         <ListItem button component={Link} href="./">
@@ -433,12 +427,18 @@ function ResponsiveDrawer(props) {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}  >
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {title}
           </Typography>
-	  <Button variant="outlined" size="small" color="error" onClick={() => auth.signOut()} startIcon={<CloseIcon />}>
-	  Sign Out
-	  </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            color="error"
+            onClick={() => auth.signOut()}
+            startIcon={<CloseIcon />}
+          >
+            Sign Out
+          </Button>
         </Toolbar>
       </AppBar>
       <Box
