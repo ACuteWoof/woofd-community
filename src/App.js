@@ -16,6 +16,7 @@ import {
   doc,
   getFirestore,
   collection,
+  onSnapshot,
   Timestamp,
   limit,
   query,
@@ -127,6 +128,7 @@ function App() {
 
 function UserInintializer() {
   useEffect(() => {
+    console.log("auth triggered");
     if (auth.currentUser.uid === "ATLdbZiL1pSHx0PG3JAc9o6Zveq1") {
       setDoc(
         doc(db, "members", auth.currentUser.uid),
@@ -146,7 +148,6 @@ function UserInintializer() {
       },
       { merge: true }
     );
-    console.log("auth triggered");
     // eslint-disable-next-line
   }, [auth]);
 
@@ -164,7 +165,11 @@ function Home() {
 function HomeContent() {
   const postsRef = collection(db, "posts");
   const q = query(postsRef, orderBy("time", "desc"), limit(50));
-  const [posts] = useCollectionData(q, { idField: "id" });
+  const [posts] = useCollectionData(q);
+  useEffect(() => {
+    console.log("posts", posts);
+    // eslint-disable-next-line
+  }, [posts]);
 
   return (
     <Container>
@@ -322,8 +327,7 @@ function Members() {
 function MembersContent() {
   const membersRef = collection(db, "members");
   const q = query(membersRef, orderBy("name"));
-  const [members] = useCollectionData(q, { idField: "id" });
-
+  const [members] = useCollectionData(q);
   return (
     <Container>
       {members &&
@@ -345,6 +349,7 @@ function MemberCard(props) {
   const [displayRole, setRole] = useState("Member");
 
   useEffect(() => {
+    console.log("member card triggered");
     if (role === "Admin") {
       setRole("Admin");
       setColor("success");
@@ -352,7 +357,6 @@ function MemberCard(props) {
       // eslint-disable-next-line
       setRole("Member");
       setColor("primary");
-      console.log("member card triggered");
     }
   }, [role]);
   return (
@@ -386,9 +390,25 @@ function About() {
 }
 
 function Chat() {
+  const drawer = (
+    <div>
+      <Toolbar>
+        <Typography variant="h6" gutterBottom>
+          Woofverse Chat
+        </Typography>
+      </Toolbar>
+      <Divider />
+      <List>
+        <ListItem button component={Link} href="./chat/main">
+          <ListItemText>Kennel</ListItemText>
+        </ListItem>
+      </List>
+    </div>
+  );
+  const title = "Kennel";
   return (
     <>
-      <ResponsiveDrawer content={<h1>In The Works</h1>} />
+      <ResponsiveChatDrawer title={title} drawer={drawer} />
     </>
   );
 }
@@ -598,12 +618,104 @@ function ResponsiveDrawer(props) {
   );
 }
 
-ResponsiveDrawer.propTypes = {
-  /**
-   * Injected by the documentation to work in an iframe.
-   * You won't need it on your project.
-   */
-  window: PropTypes.func,
-};
+const chatDrawerWidth = 240;
+
+function ResponsiveChatDrawer(props) {
+  const { window, title, content, drawer } = props;
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const container =
+    window !== undefined ? () => window().document.body : undefined;
+
+  return (
+    <Box sx={{ display: "flex" }}>
+      <CssBaseline />
+      <AppBar
+        position="fixed"
+        sx={{
+          width: { sm: `calc(100% - ${chatDrawerWidth}px)` },
+          ml: { sm: `${chatDrawerWidth}px` },
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { sm: "none" } }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+            {title}
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            color="error"
+            onClick={() => auth.signOut()}
+            startIcon={<CloseIcon />}
+          >
+            Sign Out
+          </Button>
+        </Toolbar>
+      </AppBar>
+      <Box
+        component="nav"
+        sx={{ width: { sm: chatDrawerWidth }, flexShrink: { sm: 0 } }}
+      >
+        {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
+        <Drawer
+          container={container}
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true, // Better open performance on mobile.
+          }}
+          sx={{
+            display: { xs: "block", sm: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: chatDrawerWidth,
+            },
+          }}
+        >
+          {drawer}
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: "none", sm: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: chatDrawerWidth,
+            },
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { sm: `calc(100% - ${chatDrawerWidth}px)` },
+          minHeight: "100vh",
+        }}
+      >
+        <Toolbar />
+        {content}
+      </Box>
+    </Box>
+  );
+}
 
 export default App;
