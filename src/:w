@@ -104,7 +104,7 @@ function App() {
     return (
       <ThemeProvider theme={theme}>
         <UserInintializer />
-        <CssBaseline enableColorScheme />
+        <CssBaseline />
         <Router>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -321,7 +321,7 @@ function Members() {
 
 function MembersContent() {
   const membersRef = collection(db, "members");
-  const q = query(membersRef, orderBy("name"));
+  const q = query(membersRef, orderBy("time", "desc"), limit(50));
   const [members] = useCollectionData(q, { idField: "id" });
 
   return (
