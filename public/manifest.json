@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Woofverse",
+  "name": "The social media platform for the woofs to hangout.",
   "icons": [
     {
       "src": "favicon.ico",
