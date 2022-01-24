@@ -149,7 +149,7 @@ function UserInintializer() {
 function Home() {
   return (
     <>
-      <ResponsiveDrawer title="Woofverse" content={<HomeContent />} />
+      <ResponsiveDrawer title="Home" content={<HomeContent />} />
     </>
   );
 }
