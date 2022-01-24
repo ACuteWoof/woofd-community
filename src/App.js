@@ -145,6 +145,7 @@ function UserInintializer() {
       },
       { merge: true }
     );
+    console.log("auth triggered");
     // eslint-disable-next-line
   }, [auth]);
 
@@ -350,6 +351,7 @@ function MemberCard(props) {
       // eslint-disable-next-line
       setRole("Member");
       setColor("primary");
+      console.log("member card triggered");
     }
   }, []);
   return (
@@ -359,7 +361,12 @@ function MemberCard(props) {
           <Avatar src={pfp} sx={{ width: 69, height: 69 }} />
           <Box sx={{ p: 2 }}>
             <Typography fontWeight={700}>{name}</Typography>
-            <Chip label={displayRole} variant="outlined" size="small" color={color} />
+            <Chip
+              label={displayRole}
+              variant="outlined"
+              size="small"
+              color={color}
+            />
           </Box>
         </Stack>
       </Box>
