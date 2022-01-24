@@ -349,7 +349,7 @@ function MemberCard(props) {
       role = "Member";
       setColor("primary");
     }
-  }, [role]);
+  }, []);
   return (
     <Card sx={{ my: 3 }}>
       <Box sx={{ p: 2, display: "flex" }}>
