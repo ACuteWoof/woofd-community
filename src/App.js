@@ -340,13 +340,15 @@ function MembersContent() {
 function MemberCard(props) {
   let { name, pfp, role } = props;
   const [color, setColor] = useState("primary");
+  const [displayRole, setRole] = useState("Member");
 
   useEffect(() => {
     if (role === "Admin") {
+      setRole("Admin");
       setColor("success");
     } else {
       // eslint-disable-next-line
-      role = "Member";
+      setRole("Member");
       setColor("primary");
     }
   }, []);
@@ -357,7 +359,7 @@ function MemberCard(props) {
           <Avatar src={pfp} sx={{ width: 69, height: 69 }} />
           <Box sx={{ p: 2 }}>
             <Typography fontWeight={700}>{name}</Typography>
-            <Chip label={role} variant="outlined" size="small" color={color} />
+            <Chip label={displayRole} variant="outlined" size="small" color={color} />
           </Box>
         </Stack>
       </Box>
