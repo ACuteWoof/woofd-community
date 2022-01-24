@@ -1,5 +1,6 @@
 import * as React from "react";
 import woofverse from "./woofverse.png";
+import wall from "./wall.svg";
 
 import { useState, useEffect } from "react";
 
@@ -582,6 +583,12 @@ function ResponsiveDrawer(props) {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          minHeight: "100vh",
+          backgroundImage: `url('${wall}')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          backgroundAttachment: "fixed",
         }}
       >
         <Toolbar />
