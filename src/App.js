@@ -1,4 +1,5 @@
 import * as React from "react";
+import woofverse from "./woofverse.png";
 
 import { useState, useEffect } from "react";
 
@@ -47,12 +48,12 @@ import CardContent from "@mui/material/CardContent";
 import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
-import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
 import CloseIcon from "@mui/icons-material/Close";
+import Grid from "@mui/material/Grid";
 import GoogleIcon from "@mui/icons-material/Google";
 
 const theme = createTheme({
@@ -360,35 +361,76 @@ function Chat() {
 
 function SignInScreen() {
   return (
-    <Grid
-      container
-      spacing={0}
-      direction="column"
-      alignItems="center"
-      justify="center"
-      style={{ minHeight: "100vh" }}
-    >
-      <Grid item xs={3}>
+    <Box>
+      <AppBar>
+        <Toolbar>
+          <Avatar src={woofverse} sx={{ mr: 3 }} />
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            Woofverse
+          </Typography>
+          <SignInButton />
+        </Toolbar>
+      </AppBar>
+      <Toolbar />
+      <Container sx={{ my: 9 }}>
         <Grid
           container
-          spacing={0}
-          direction="row"
+          spacing={3}
+          direction="column"
+          justifyContent="center"
           alignItems="center"
-          justify="center"
-          style={{ minHeight: "100vh" }}
+        >
+          <Avatar
+            alt="Woofverse"
+            src={woofverse}
+            sx={{ width: 200, height: 200 }}
+          />
+        </Grid>
+        <br />
+        <Typography variant="h3" gutterBottom sx={{ textAlign: "center" }}>
+          Welcome to Woofverse!
+        </Typography>
+        <Typography variant="body1" sx={{ textAlign: "center" }}>
+          The official social media platform for Woof's friends and followers.
+        </Typography>
+        <br />
+        <Grid
+          sx={{ mt: 1 }}
+          container
+          spacing={3}
+          direction="column"
+          justifyContent="center"
+          alignItems="center"
         >
           <Button
             variant="contained"
+            color="success"
             onClick={() => {
               signInWithPopup(auth, authProvider).then((r) => {});
             }}
             startIcon={<GoogleIcon />}
+            size="large"
           >
             Sign In
           </Button>
         </Grid>
-      </Grid>
-    </Grid>
+      </Container>
+    </Box>
+  );
+}
+
+function SignInButton() {
+  return (
+    <Button
+      variant="text"
+      color="success"
+      onClick={() => {
+        signInWithPopup(auth, authProvider).then((r) => {});
+      }}
+      startIcon={<GoogleIcon />}
+    >
+      Sign In
+    </Button>
   );
 }
 
