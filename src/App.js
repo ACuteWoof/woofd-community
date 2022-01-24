@@ -128,18 +128,11 @@ function App() {
 }
 
 function UserInintializer() {
-  let userObj;
-  [userObj] = useDocumentData(doc(db, `members/${auth.currentUser.uid}`), {
-    idField: "id",
-  });
-
   useEffect(() => {
-    if (!userObj) {
       setDoc(doc(db, "members", auth.currentUser.uid), {
         name: auth.currentUser.displayName,
         pfp: auth.currentUser.photoURL,
-      });
-    }
+      }, {merge: true});
     // eslint-disable-next-line
   }, []);
 
@@ -321,20 +314,38 @@ function MembersContent() {
     <Container>
       {members &&
         members.map((member) => (
-          <MemberCard key={member.id} name={member.name} pfp={member.pfp} />
+          <MemberCard
+            key={member.id}
+            name={member.name}
+            pfp={member.pfp}
+            role={member.role}
+          />
         ))}
     </Container>
   );
 }
 
 function MemberCard(props) {
-  const { name, pfp } = props;
+  let { name, pfp, role } = props;
+  const [color, setColor] = useState("primary");
+
+  useEffect(() => {
+    if (role === "Admin") {
+      setColor("success");
+    } else {
+      role = "Member"
+      setColor("primary");
+    }
+  }, [role]);
   return (
     <Card sx={{ my: 3 }}>
       <Box sx={{ p: 2, display: "flex" }}>
         <Stack spacing={2} direction="row">
           <Avatar src={pfp} sx={{ width: 69, height: 69 }} />
-          <Typography fontWeight={700}>{name}</Typography>
+          <Box sx={{ p: 2 }}>
+            <Typography fontWeight={700}>{name}</Typography>
+            <Chip label={role} variant="outlined" size="small" color={color} />
+          </Box>
         </Stack>
       </Box>
     </Card>
