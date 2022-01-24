@@ -47,11 +47,13 @@ import CardContent from "@mui/material/CardContent";
 import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
+import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
 import CloseIcon from "@mui/icons-material/Close";
+import GoogleIcon from "@mui/icons-material/Google";
 
 const theme = createTheme({
   palette: {
@@ -358,14 +360,35 @@ function Chat() {
 
 function SignInScreen() {
   return (
-    <Button
-      variant="contained"
-      onClick={() => {
-        signInWithPopup(auth, authProvider).then((r) => {});
-      }}
+    <Grid
+      container
+      spacing={0}
+      direction="column"
+      alignItems="center"
+      justify="center"
+      style={{ minHeight: "100vh" }}
     >
-      Sign In
-    </Button>
+      <Grid item xs={3}>
+        <Grid
+          container
+          spacing={0}
+          direction="row"
+          alignItems="center"
+          justify="center"
+          style={{ minHeight: "100vh" }}
+        >
+          <Button
+            variant="contained"
+            onClick={() => {
+              signInWithPopup(auth, authProvider).then((r) => {});
+            }}
+            startIcon={<GoogleIcon />}
+          >
+            Sign In
+          </Button>
+        </Grid>
+      </Grid>
+    </Grid>
   );
 }
 
