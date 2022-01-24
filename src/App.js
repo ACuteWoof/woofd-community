@@ -353,7 +353,7 @@ function MemberCard(props) {
       setColor("primary");
       console.log("member card triggered");
     }
-  }, []);
+  }, [role]);
   return (
     <Card sx={{ my: 3 }}>
       <Box sx={{ p: 2, display: "flex" }}>
