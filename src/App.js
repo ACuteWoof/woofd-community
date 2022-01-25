@@ -58,7 +58,6 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import Grid from "@mui/material/Grid";
 import GoogleIcon from "@mui/icons-material/Google";
-import SendIcon from "@mui/icons-material/Send";
 
 const theme = createTheme({
   palette: {
@@ -106,6 +105,9 @@ const firebaseBackupConfig = {
   messagingSenderId: "558762004854",
   appId: "1:558762004854:web:76ad9230d7c9ff3353aa57",
 };
+
+console.log(firebaseConfig);
+console.log(firebaseBackupConfig);
 
 initializeApp(firebaseConfig);
 // initializeApp(firebaseBackupConfig);
@@ -441,15 +443,18 @@ function ChatContent(props) {
   const messagesRef = collection(db, "chat", chatRoom, "messages");
   const q = query(messagesRef, orderBy("createdAt"), limit(50));
   const [messages] = useCollectionData(q);
+  const dummy = useRef();
+
+  useEffect(() => {
+    dummy.current.scrollIntoView({ behavior: "smooth" });
+  });
 
   return (
-    <>
+	  <>
       <Container
-        sx={{
-          position: "relative",
-          height: "100%",
-          width: "100%",
-        }}
+	  fixed
+	  sx={{width: '100%', p: '38px'}}
+
       >
         <Stack direction="column" spacing={2}>
           {messages &&
@@ -463,16 +468,18 @@ function ChatContent(props) {
                 userId={message.authorId}
               />
             ))}
+	  <span ref={dummy}/>
         </Stack>
       </Container>
-      <PostMessage />
-    </>
+	  <PostMessage />
+	  </>
   );
 }
 
 function ChatMessage(props) {
   const { message, userName, avatar, time, userId } = props;
   const [buttonDisplay, setButtonDisplay] = useState("none");
+  const [hoverState, setHoverState] = useState(false);
   const displayTime = time.toDate().toLocaleString(undefined, {
     hour: "numeric",
     minute: "numeric",
@@ -481,17 +488,24 @@ function ChatMessage(props) {
     day: "numeric",
   });
   useEffect(() => {
-    if (userId === auth.currentUser.uid) {
+    if (userId === auth.currentUser.uid && hoverState) {
       setButtonDisplay("");
     } else {
       setButtonDisplay("none");
     }
-  }, [userId]);
+  }, [userId, hoverState]);
   return (
     <Box>
       <Stack direction="row" spacing={2}>
         <Avatar src={avatar} />
-        <Box>
+        <Box
+          onMouseEnter={() => {
+            setHoverState(true);
+          }}
+          onMouseLeave={() => {
+            setHoverState(false);
+          }}
+        >
           <Stack direction="row" spacing={2}>
             <Typography variant="h6" gutterBottom>
               {userName}
@@ -510,7 +524,7 @@ function ChatMessage(props) {
               <ClearIcon fontSize="small" />
             </IconButton>
           </Stack>
-          <Typography variant="body2" color="textSecondary" component="p">
+          <Typography variant="body1" color="textSecondary" component="p">
             {message}
           </Typography>
         </Box>
@@ -522,7 +536,6 @@ function ChatMessage(props) {
 function PostMessage() {
   const { chatRoom } = useParams();
   const [message, setMessage] = useState("");
-  const [buttonDisabled, setButtonDisabled] = useState(true);
 
   const sendMessage = () => {
     addDoc(collection(db, "chat", chatRoom, "messages"), {
@@ -534,9 +547,7 @@ function PostMessage() {
     });
   };
 
-  const onChangeFunction = (e) => {
-    setMessage(e.target.value);
-    console.log(e.target.value);
+  const onKeyDownFunction = (e) => {
     if (e.key === "Enter") {
       console.log(0);
       e.preventDefault();
@@ -544,46 +555,27 @@ function PostMessage() {
       sendMessage();
       e.target.value = "";
     }
+  };
+
+  const onChangeFunction = (e) => {
     if (e.target.value.length > 0) {
-      setButtonDisabled(false);
+      setMessage(e.target.value.trim());
     } else {
-      setButtonDisabled(true);
     }
   };
 
   return (
-    <Paper
-      sx={{
-        position: "fixed",
-        left: chatDrawerWidth,
-        bottom: 0,
-        right: 0,
-        p: 1,
-        px: 3,
-        borderRadius: 0,
-      }}
-      elevation={0}
-    >
+    <Paper sx={{position: "fixed", right: 0, bottom: 0, left: chatDrawerWidth, p: 1, px: 5, borderRadius: 0}}>
       <Stack direction="row" spacing={1}>
         <TextField
           fullWidth
           label="Message"
+	  autoComplete="off"
           size="small"
           color="primary"
           onChange={onChangeFunction}
+          onKeyDown={onKeyDownFunction}
         />
-        <Button
-          endIcon={<SendIcon />}
-          variant="outlined"
-          color="primary"
-          disableElevation
-          disabled={buttonDisabled}
-          onClick={() => {
-            sendMessage();
-          }}
-        >
-          Send
-        </Button>
       </Stack>
     </Paper>
   );
@@ -692,7 +684,7 @@ function ResponsiveDrawer(props) {
         <ListItem button component={Link} href="./about">
           <ListItemText>About</ListItemText>
         </ListItem>
-        <ListItem button component={Link} href="./chat">
+        <ListItem button component={Link} href="./chat/main">
           <ListItemText>Chat</ListItemText>
         </ListItem>
       </List>
