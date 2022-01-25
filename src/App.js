@@ -308,7 +308,7 @@ function PostCreator() {
 }
 
 function ContentCard(props) {
-  const { title, content, authorName, authorPfp, time } = props;
+  const { title, content, authorName, authorPfp } = props;
   return (
     <>
       <Card sx={{ my: 3 }}>
