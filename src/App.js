@@ -1,6 +1,7 @@
 import * as React from "react";
 import woofverse from "./woofverse.png";
 import wall from "./wall.svg";
+import './MarkdownStyles.css'
 
 import { useState, useEffect, useRef } from "react";
 
@@ -59,6 +60,8 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import Grid from "@mui/material/Grid";
 import GoogleIcon from "@mui/icons-material/Google";
+
+import ReactMarkdown from 'react-markdown'
 
 const theme = createTheme({
   palette: {
@@ -316,11 +319,11 @@ function ContentCard(props) {
           <Typography gutterBottom variant="h5" component="h2">
             {title}
           </Typography>
-          <br />
-          <Typography variant="body2" color="textSecondary" component="p">
+	  <Box sx={{ mb: 5 }}>
+	  <ReactMarkdown >
             {content}
-          </Typography>
-          <br />
+          </ReactMarkdown>
+	  </Box>
           <Stack direction="row" spacing={1}>
             <Chip
               avatar={<Avatar alt="avatar" src={authorPfp} />}
@@ -505,7 +508,7 @@ function ChatMessage(props) {
 
   return (
     <Box>
-      <Stack direction="row" spacing={2}>
+	  <Stack direction="row" spacing={2} sx={{m: 0}}>
         <Avatar src={avatar} />
         <Box
           onMouseEnter={() => {
@@ -533,9 +536,9 @@ function ChatMessage(props) {
               <ClearIcon fontSize="small" onClick={deleteMessage} />
             </IconButton>
           </Stack>
-          <Typography variant="body1" color="textSecondary" component="p">
+	  <ReactMarkdown className="md">
             {message}
-          </Typography>
+          </ReactMarkdown>
         </Box>
       </Stack>
     </Box>
