@@ -2,9 +2,14 @@ import * as React from "react";
 import woofverse from "./woofverse.png";
 import wall from "./wall.svg";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useParams,
+} from "react-router-dom";
 
 import { initializeApp } from "firebase/app";
 import { useAuthState } from "react-firebase-hooks/auth";
@@ -49,9 +54,11 @@ import AddIcon from "@mui/icons-material/Add";
 import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
+import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import Grid from "@mui/material/Grid";
 import GoogleIcon from "@mui/icons-material/Google";
+import SendIcon from "@mui/icons-material/Send";
 
 const theme = createTheme({
   palette: {
@@ -91,7 +98,17 @@ const firebaseConfig = {
   measurementId: "G-TYRZ214QW4",
 };
 
+const firebaseBackupConfig = {
+  apiKey: "AIzaSyAFnVZqiUnQ76tDbGQZ31HeR8TdzzJNW-A",
+  authDomain: "woofverse-backup.firebaseapp.com",
+  projectId: "woofverse-backup",
+  storageBucket: "woofverse-backup.appspot.com",
+  messagingSenderId: "558762004854",
+  appId: "1:558762004854:web:76ad9230d7c9ff3353aa57",
+};
+
 initializeApp(firebaseConfig);
+// initializeApp(firebaseBackupConfig);
 const db = getFirestore();
 const auth = getAuth();
 const authProvider = new GoogleAuthProvider();
@@ -110,7 +127,7 @@ function App() {
             <Route path="/members" element={<Members />} />
             <Route path="/about" element={<About />} />
             <Route path="/chat" element={<Chat />} />
-	    <Route path="/chat/:id" element={<Chat />} />
+            <Route path="/chat/:chatRoom" element={<Chat />} />
           </Routes>
         </Router>
       </ThemeProvider>
@@ -389,6 +406,7 @@ function About() {
 }
 
 function Chat() {
+  const { chatRoom } = useParams();
   const drawer = (
     <div>
       <Toolbar>
@@ -407,8 +425,167 @@ function Chat() {
   const title = "Kennel";
   return (
     <>
-      <ResponsiveChatDrawer title={title} drawer={drawer} />
+      <ResponsiveChatDrawer
+        title={title}
+        drawer={drawer}
+        content={<ChatContent chatRoom={chatRoom} />}
+      />
     </>
+  );
+}
+
+const chatDrawerWidth = 240;
+
+function ChatContent(props) {
+  const { chatRoom } = props;
+  const messagesRef = collection(db, "chat", chatRoom, "messages");
+  const q = query(messagesRef, orderBy("createdAt"), limit(50));
+  const [messages] = useCollectionData(q);
+
+  return (
+    <>
+      <Container
+        sx={{
+          position: "relative",
+          height: "100%",
+          width: "100%",
+        }}
+      >
+        <Stack direction="column" spacing={2}>
+          {messages &&
+            messages.map((message) => (
+              <ChatMessage
+                key={message.id}
+                message={message.content}
+                userName={message.authorName}
+                avatar={message.authorAvatar}
+                time={message.createdAt}
+                userId={message.authorId}
+              />
+            ))}
+        </Stack>
+      </Container>
+      <PostMessage />
+    </>
+  );
+}
+
+function ChatMessage(props) {
+  const { message, userName, avatar, time, userId } = props;
+  const [buttonDisplay, setButtonDisplay] = useState("none");
+  const displayTime = time.toDate().toLocaleString(undefined, {
+    hour: "numeric",
+    minute: "numeric",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+  useEffect(() => {
+    if (userId === auth.currentUser.uid) {
+      setButtonDisplay("");
+    } else {
+      setButtonDisplay("none");
+    }
+  }, [userId]);
+  return (
+    <Box>
+      <Stack direction="row" spacing={2}>
+        <Avatar src={avatar} />
+        <Box>
+          <Stack direction="row" spacing={2}>
+            <Typography variant="h6" gutterBottom>
+              {userName}
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{ position: "relative", top: "8px" }}
+            >
+              {displayTime}
+            </Typography>
+            <IconButton
+              aria-label="fingerprint"
+              color="error"
+              sx={{ display: buttonDisplay }}
+            >
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+          <Typography variant="body2" color="textSecondary" component="p">
+            {message}
+          </Typography>
+        </Box>
+      </Stack>
+    </Box>
+  );
+}
+
+function PostMessage() {
+  const { chatRoom } = useParams();
+  const [message, setMessage] = useState("");
+  const [buttonDisabled, setButtonDisabled] = useState(true);
+
+  const sendMessage = () => {
+    addDoc(collection(db, "chat", chatRoom, "messages"), {
+      content: message,
+      authorName: auth.currentUser.displayName,
+      authorAvatar: auth.currentUser.photoURL,
+      authorId: auth.currentUser.uid,
+      createdAt: Timestamp.now(),
+    });
+  };
+
+  const onChangeFunction = (e) => {
+    setMessage(e.target.value);
+    console.log(e.target.value);
+    if (e.key === "Enter") {
+      console.log(0);
+      e.preventDefault();
+      e.stopPropagation();
+      sendMessage();
+      e.target.value = "";
+    }
+    if (e.target.value.length > 0) {
+      setButtonDisabled(false);
+    } else {
+      setButtonDisabled(true);
+    }
+  };
+
+  return (
+    <Paper
+      sx={{
+        position: "fixed",
+        left: chatDrawerWidth,
+        bottom: 0,
+        right: 0,
+        p: 1,
+        px: 3,
+        borderRadius: 0,
+      }}
+      elevation={0}
+    >
+      <Stack direction="row" spacing={1}>
+        <TextField
+          fullWidth
+          label="Message"
+          size="small"
+          color="primary"
+          onChange={onChangeFunction}
+        />
+        <Button
+          endIcon={<SendIcon />}
+          variant="outlined"
+          color="primary"
+          disableElevation
+          disabled={buttonDisabled}
+          onClick={() => {
+            sendMessage();
+          }}
+        >
+          Send
+        </Button>
+      </Stack>
+    </Paper>
   );
 }
 
@@ -616,8 +793,6 @@ function ResponsiveDrawer(props) {
     </Box>
   );
 }
-
-const chatDrawerWidth = 240;
 
 function ResponsiveChatDrawer(props) {
   const { window, title, content, drawer } = props;
