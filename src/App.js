@@ -308,7 +308,7 @@ function PostCreator() {
 }
 
 function ContentCard(props) {
-  const { title, content, authorName, authorPfp } = props;
+  const { title, content, authorName, authorPfp, time } = props;
   return (
     <>
       <Card sx={{ my: 3 }}>
@@ -485,7 +485,7 @@ function ChatContent(props) {
 }
 
 function ChatMessage(props) {
-  const { message, userName, avatar, time, userId, id, chatRoom, displayTime } =
+  const { message, userName, avatar,  userId, id, chatRoom, displayTime } =
     props;
   const [buttonDisplay, setButtonDisplay] = useState("none");
   const [hoverState, setHoverState] = useState(false);
