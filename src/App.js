@@ -437,7 +437,7 @@ function Chat() {
   );
 }
 
-const chatDrawerWidth = 240;
+let chatDrawerWidth = 240;
 
 function ChatContent(props) {
   const { chatRoom } = props;
@@ -452,7 +452,7 @@ function ChatContent(props) {
 
   return (
     <>
-      <Container fixed sx={{ width: "100%", pb: "38px", m: 2 }}>
+      <Container fixed sx={{ width: "100%", pb: "30px", m: 0 }}>
         <Stack direction="column" spacing={2}>
           {messages &&
             messages.map((message) => (
@@ -485,7 +485,7 @@ function ChatContent(props) {
 }
 
 function ChatMessage(props) {
-  const { message, userName, avatar,  userId, id, chatRoom, displayTime } =
+  const { message, userName, avatar, userId, id, chatRoom, displayTime } =
     props;
   const [buttonDisplay, setButtonDisplay] = useState("none");
   const [hoverState, setHoverState] = useState(false);
@@ -543,6 +543,21 @@ function ChatMessage(props) {
 }
 
 function PostMessage() {
+  const [width, setWidth] = useState(window.innerWidth);
+  const [left, setLeft] = useState(chatDrawerWidth);
+
+  function handleWindowSizeChange() {
+    setWidth(window.innerWidth);
+  }
+  useEffect(() => {
+    window.addEventListener("resize", handleWindowSizeChange);
+    return () => {
+      window.removeEventListener("resize", handleWindowSizeChange);
+    };
+  }, []);
+
+  const isMobile = width <= 768;
+
   const { chatRoom } = useParams();
   const [message, setMessage] = useState("");
 
@@ -575,13 +590,21 @@ function PostMessage() {
     }
   };
 
+  useEffect(() => {
+    if (isMobile) {
+      setLeft(0);
+    } else {
+      setLeft(chatDrawerWidth);
+    }
+  }, [isMobile]);
+
   return (
     <Paper
       sx={{
         position: "fixed",
         right: 0,
         bottom: 0,
-        left: chatDrawerWidth,
+        left: left,
         p: 1,
         px: 5,
         borderRadius: 0,
@@ -685,6 +708,11 @@ function ResponsiveDrawer(props) {
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+    if (mobileOpen) {
+      chatDrawerWidth = drawerWidth;
+    } else {
+      chatDrawerWidth = 0;
+    }
   };
 
   const drawer = (
@@ -841,18 +869,20 @@ function ResponsiveChatDrawer(props) {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {title}
           </Typography>
-	  <Stack direction="row" spacing={2}>
-	  <Button variant="outlined" size="small" component="a" href="/">Back</Button>
-          <Button
-            variant="outlined"
-            size="small"
-            color="error"
-            onClick={() => auth.signOut()}
-            startIcon={<CloseIcon />}
-          >
-            Sign Out
-          </Button>
-	  </Stack>
+          <Stack direction="row" spacing={2}>
+            <Button variant="outlined" size="small" component="a" href="/">
+              Back
+            </Button>
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              onClick={() => auth.signOut()}
+              startIcon={<CloseIcon />}
+            >
+              Sign Out
+            </Button>
+          </Stack>
         </Toolbar>
       </AppBar>
       <Box
