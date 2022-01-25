@@ -21,7 +21,7 @@ import {
   doc,
   getFirestore,
   collection,
-  Timestamp,
+  serverTimestamp,
   limit,
   query,
   orderBy,
@@ -224,7 +224,7 @@ function PostCreator() {
       content: content,
       authorName: auth.currentUser.displayName,
       authorPfp: auth.currentUser.photoURL,
-      time: Timestamp.now(),
+      time: serverTimestamp(),
     });
     setEnabled(false);
     setButtonDisplay("");
@@ -543,7 +543,7 @@ function PostMessage() {
       authorName: auth.currentUser.displayName,
       authorAvatar: auth.currentUser.photoURL,
       authorId: auth.currentUser.uid,
-      createdAt: Timestamp.now(),
+      createdAt: serverTimestamp(),
     });
   };
 
