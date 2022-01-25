@@ -20,6 +20,7 @@ import {
   setDoc,
   doc,
   getFirestore,
+  deleteDoc,
   collection,
   serverTimestamp,
   limit,
@@ -450,12 +451,8 @@ function ChatContent(props) {
   });
 
   return (
-	  <>
-      <Container
-	  fixed
-	  sx={{width: '100%', pb: '38px', m:2}}
-
-      >
+    <>
+      <Container fixed sx={{ width: "100%", pb: "38px", m: 2 }}>
         <Stack direction="column" spacing={2}>
           {messages &&
             messages.map((message) => (
@@ -464,29 +461,35 @@ function ChatContent(props) {
                 message={message.content}
                 userName={message.authorName}
                 avatar={message.authorAvatar}
-                time={message.createdAt}
+                displayTime={
+                  message.createdAt &&
+                  message.createdAt.toDate().toLocaleString(undefined, {
+                    hour: "numeric",
+                    minute: "numeric",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })
+                }
                 userId={message.authorId}
+                id={message.id}
+                chatRoom={chatRoom}
               />
             ))}
-	  <span ref={dummy}/>
+          <span ref={dummy} />
         </Stack>
       </Container>
-	  <PostMessage />
-	  </>
+      <PostMessage />
+    </>
   );
 }
 
 function ChatMessage(props) {
-  const { message, userName, avatar, time, userId } = props;
+  const { message, userName, avatar, time, userId, id, chatRoom, displayTime } =
+    props;
   const [buttonDisplay, setButtonDisplay] = useState("none");
   const [hoverState, setHoverState] = useState(false);
-  const displayTime = time.toDate().toLocaleString(undefined, {
-    hour: "numeric",
-    minute: "numeric",
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
+
   useEffect(() => {
     if (userId === auth.currentUser.uid && hoverState) {
       setButtonDisplay("");
@@ -494,6 +497,12 @@ function ChatMessage(props) {
       setButtonDisplay("none");
     }
   }, [userId, hoverState]);
+
+  const deleteMessage = () => {
+    console.log(id);
+    deleteDoc(doc(db, "chat", chatRoom, "messages", id));
+  };
+
   return (
     <Box>
       <Stack direction="row" spacing={2}>
@@ -521,7 +530,7 @@ function ChatMessage(props) {
               color="error"
               sx={{ display: buttonDisplay }}
             >
-              <ClearIcon fontSize="small" />
+              <ClearIcon fontSize="small" onClick={deleteMessage} />
             </IconButton>
           </Stack>
           <Typography variant="body1" color="textSecondary" component="p">
@@ -538,12 +547,14 @@ function PostMessage() {
   const [message, setMessage] = useState("");
 
   const sendMessage = () => {
-    addDoc(collection(db, "chat", chatRoom, "messages"), {
+    const messageRef = doc(collection(db, "chat", chatRoom, "messages"));
+    setDoc(messageRef, {
       content: message,
       authorName: auth.currentUser.displayName,
       authorAvatar: auth.currentUser.photoURL,
       authorId: auth.currentUser.uid,
       createdAt: serverTimestamp(),
+      id: messageRef.id,
     });
   };
 
@@ -565,12 +576,22 @@ function PostMessage() {
   };
 
   return (
-    <Paper sx={{position: "fixed", right: 0, bottom: 0, left: chatDrawerWidth, p: 1, px: 5, borderRadius: 0}}>
+    <Paper
+      sx={{
+        position: "fixed",
+        right: 0,
+        bottom: 0,
+        left: chatDrawerWidth,
+        p: 1,
+        px: 5,
+        borderRadius: 0,
+      }}
+    >
       <Stack direction="row" spacing={1}>
         <TextField
           fullWidth
           label="Message"
-	  autoComplete="off"
+          autoComplete="off"
           size="small"
           color="primary"
           onChange={onChangeFunction}
