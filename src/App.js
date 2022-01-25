@@ -453,7 +453,7 @@ function ChatContent(props) {
 	  <>
       <Container
 	  fixed
-	  sx={{width: '100%', p: '38px'}}
+	  sx={{width: '100%', pb: '38px', m:2}}
 
       >
         <Stack direction="column" spacing={2}>
