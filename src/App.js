@@ -16,7 +16,6 @@ import {
   doc,
   getFirestore,
   collection,
-  onSnapshot,
   Timestamp,
   limit,
   query,
@@ -27,7 +26,6 @@ import { useCollectionData } from "react-firebase-hooks/firestore";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 
-import PropTypes from "prop-types";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
@@ -112,6 +110,7 @@ function App() {
             <Route path="/members" element={<Members />} />
             <Route path="/about" element={<About />} />
             <Route path="/chat" element={<Chat />} />
+	    <Route path="/chat/:id" element={<Chat />} />
           </Routes>
         </Router>
       </ThemeProvider>
