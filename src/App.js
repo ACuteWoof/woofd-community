@@ -1,7 +1,7 @@
 import * as React from "react";
 import woofverse from "./woofverse.png";
 import wall from "./wall.svg";
-import './MarkdownStyles.css'
+import "./MarkdownStyles.css";
 
 import { useState, useEffect, useRef } from "react";
 
@@ -35,7 +35,6 @@ import CssBaseline from "@mui/material/CssBaseline";
 
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import IconButton from "@mui/material/IconButton";
 import List from "@mui/material/List";
@@ -58,10 +57,11 @@ import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
 import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
+import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
 import GoogleIcon from "@mui/icons-material/Google";
 
-import ReactMarkdown from 'react-markdown'
+import ReactMarkdown from "react-markdown";
 
 const theme = createTheme({
   palette: {
@@ -211,6 +211,7 @@ function HomeContent() {
               month: "long",
               day: "numeric",
             })}
+            id={post.id}
           />
         ))}
     </Container>
@@ -223,12 +224,14 @@ function PostCreator() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const makePost = () => {
-    addDoc(collection(db, "posts"), {
+    const docRef = doc(collection(db, "posts"));
+    setDoc(docRef, {
       title: title,
       content: content,
       authorName: auth.currentUser.displayName,
       authorPfp: auth.currentUser.photoURL,
       time: serverTimestamp(),
+      id: docRef.id,
     });
     setEnabled(false);
     setButtonDisplay("");
@@ -311,7 +314,9 @@ function PostCreator() {
 }
 
 function ContentCard(props) {
-  const { title, content, authorName, authorPfp, time } = props;
+  const { title, content, authorName, authorPfp, time, id } = props;
+  const [showComments, setShowComments] = useState(false);
+  const [commentButtonDisplay, setCommentButtonDisplay] = useState("");
   return (
     <>
       <Card sx={{ my: 3 }}>
@@ -319,11 +324,9 @@ function ContentCard(props) {
           <Typography gutterBottom variant="h5" component="h2">
             {title}
           </Typography>
-	  <Box sx={{ mb: 5 }}>
-	  <ReactMarkdown >
-            {content}
-          </ReactMarkdown>
-	  </Box>
+          <Box sx={{ mb: 5 }}>
+            <ReactMarkdown>{content}</ReactMarkdown>
+          </Box>
           <Stack direction="row" spacing={1}>
             <Chip
               avatar={<Avatar alt="avatar" src={authorPfp} />}
@@ -331,10 +334,101 @@ function ContentCard(props) {
               color="primary"
             />
             <Chip label={time} color="primary" variant="outlined" />
+            <Button
+              onClick={() => {
+                setShowComments(true);
+                setCommentButtonDisplay("none");
+              }}
+              sx={{ borderRadius: "16px", display: commentButtonDisplay }}
+              variant="outlined"
+              size="small"
+              disableElevation
+            >
+              Show Comments
+            </Button>
           </Stack>
+          <Collapse in={showComments}>
+            <Box sx={{ my: 3 }}>
+              <Button
+                sx={{ borderRadius: "16px" }}
+                color="error"
+                size="small"
+                variant="outlined"
+                disableElevation
+                onClick={() => {
+                  setShowComments(false);
+                  setCommentButtonDisplay("");
+                }}
+                endIcon={<CloseIcon />}
+              >
+                Hide Comments
+              </Button>
+              <Comments id={id} />
+            </Box>
+          </Collapse>
         </CardContent>
       </Card>
     </>
+  );
+}
+
+function Comments(props) {
+  const { id } = props;
+  console.log(id)
+  const commentsRef = collection(db, "posts", id, "comments");
+  const q = query(commentsRef, orderBy("time", "desc"));
+  const [comments] = useCollectionData(q);
+
+  useEffect(() => {
+    console.log(commentsRef);
+    console.log("comments", comments);
+  }, [comments]);
+
+  return (
+    <Box sx={{ my: 3 }}>
+      <Divider sx={{ mb: 3 }} />
+      {comments &&
+        comments.map((comment) => (
+          <Comment
+            key={comment.id}
+            content={comment.content}
+            authorName={comment.authorName}
+            authorPfp={comment.authorPfp}
+            time={
+              comment.time &&
+              comment.time.toDate().toLocaleString(undefined, {
+                hour: "numeric",
+                minute: "numeric",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            }
+            id={comment.id && comment.id}
+          />
+        ))}
+    </Box>
+  );
+}
+
+function Comment(props) {
+  const { comment, authorName, authorPfp, time } = props;
+  return (
+    <Box sx={{ my: 3 }}>
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="body1" gutterBottom>
+          {comment}
+        </Typography>
+      </Box>
+      <Stack direction="row" spacing={1}>
+        <Chip
+          avatar={<Avatar alt="avatar" src={authorPfp} />}
+          label={authorName}
+          color="primary"
+        />
+        <Chip label={time} color="primary" variant="outlined" />
+      </Stack>
+    </Box>
   );
 }
 
@@ -507,17 +601,18 @@ function ChatMessage(props) {
   };
 
   return (
-    <Box>
-	  <Stack direction="row" spacing={2} sx={{m: 0}}>
+    <Box
+      sx={{ w: "100%" }}
+      onMouseEnter={() => {
+        setHoverState(true);
+      }}
+      onMouseLeave={() => {
+        setHoverState(false);
+      }}
+    >
+      <Stack direction="row" spacing={2} sx={{ m: 0 }}>
         <Avatar src={avatar} />
-        <Box
-          onMouseEnter={() => {
-            setHoverState(true);
-          }}
-          onMouseLeave={() => {
-            setHoverState(false);
-          }}
-        >
+        <Box>
           <Stack direction="row" spacing={2}>
             <Typography variant="h6" gutterBottom>
               {userName}
@@ -536,9 +631,7 @@ function ChatMessage(props) {
               <ClearIcon fontSize="small" onClick={deleteMessage} />
             </IconButton>
           </Stack>
-	  <ReactMarkdown className="md">
-            {message}
-          </ReactMarkdown>
+          <ReactMarkdown className="md">{message}</ReactMarkdown>
         </Box>
       </Stack>
     </Box>
