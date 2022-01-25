@@ -841,6 +841,8 @@ function ResponsiveChatDrawer(props) {
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {title}
           </Typography>
+	  <Stack direction="row" spacing={2}>
+	  <Button variant="outlined" size="small" component="a" href="/">Back</Button>
           <Button
             variant="outlined"
             size="small"
@@ -850,6 +852,7 @@ function ResponsiveChatDrawer(props) {
           >
             Sign Out
           </Button>
+	  </Stack>
         </Toolbar>
       </AppBar>
       <Box
