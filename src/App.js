@@ -419,7 +419,7 @@ function Chat() {
       </Toolbar>
       <Divider />
       <List>
-        <ListItem button component={Link} href="./chat/main">
+        <ListItem button component={Link} href="/chat/main">
           <ListItemText>Kennel</ListItemText>
         </ListItem>
       </List>
