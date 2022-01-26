@@ -17,9 +17,9 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 
 import {
-  addDoc,
   setDoc,
   doc,
+  updateDoc,
   getFirestore,
   deleteDoc,
   collection,
@@ -28,7 +28,11 @@ import {
   query,
   orderBy,
 } from "firebase/firestore";
-import { useCollectionData } from "react-firebase-hooks/firestore";
+import {
+  useCollectionData,
+  useDocumentOnce,
+  useDocumentData,
+} from "react-firebase-hooks/firestore";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -55,11 +59,14 @@ import AddIcon from "@mui/icons-material/Add";
 import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
-import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
+import DeleteIcon from "@mui/icons-material/Delete";
 import GoogleIcon from "@mui/icons-material/Google";
+import CircularProgress from "@mui/material/CircularProgress";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 
 import ReactMarkdown from "react-markdown";
 
@@ -120,58 +127,77 @@ const auth = getAuth();
 const authProvider = new GoogleAuthProvider();
 
 function App() {
-  const [user] = useAuthState(auth);
+  const [user, loading] = useAuthState(auth);
 
-  if (user) {
-    return (
-      <ThemeProvider theme={theme}>
-        <UserInintializer />
-        <CssBaseline enableColorScheme />
-        <Router>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/members" element={<Members />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/chat/:chatRoom" element={<Chat />} />
-          </Routes>
-        </Router>
-      </ThemeProvider>
-    );
-  } else {
-    return (
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <SignInScreen />
-      </ThemeProvider>
-    );
-  }
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline enableColorScheme />
+      {user && (
+        <>
+          <UserInintializer />
+          <Router>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/members" element={<Members />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/chat/:chatRoom" element={<Chat />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </Router>
+        </>
+      )}
+      {loading && <Loading />}
+      {!user && !loading && <SignInScreen />}
+    </ThemeProvider>
+  );
+}
+
+function Loading() {
+  return (
+    <>
+      <Grid
+        spacing={3}
+        direction="column"
+        justifyContent="center"
+        alignItems="center"
+        sx={{ textAlign: "center", height: "100%" }}
+      >
+        <CircularProgress />
+      </Grid>
+    </>
+  );
 }
 
 function UserInintializer() {
+  const [userDoc, loading, error] = useDocumentOnce(
+    doc(db, "members", auth.currentUser.uid)
+  );
   useEffect(() => {
     console.log("auth triggered");
-    if (auth.currentUser.uid === "ATLdbZiL1pSHx0PG3JAc9o6Zveq1") {
+    if (!userDoc && !loading) {
+      if (auth.currentUser.uid === "ATLdbZiL1pSHx0PG3JAc9o6Zveq1") {
+        setDoc(
+          doc(db, "members", auth.currentUser.uid),
+          {
+            name: auth.currentUser.displayName,
+            pfp: auth.currentUser.photoURL,
+            role: "Admin",
+          },
+          { merge: true }
+        );
+      }
       setDoc(
         doc(db, "members", auth.currentUser.uid),
         {
           name: auth.currentUser.displayName,
           pfp: auth.currentUser.photoURL,
-          role: "Admin",
         },
         { merge: true }
       );
     }
-    setDoc(
-      doc(db, "members", auth.currentUser.uid),
-      {
-        name: auth.currentUser.displayName,
-        pfp: auth.currentUser.photoURL,
-      },
-      { merge: true }
-    );
     // eslint-disable-next-line
-  }, [auth]);
+  }, [auth, userDoc, loading, error]);
 
   return <></>;
 }
@@ -188,6 +214,7 @@ function HomeContent() {
   const postsRef = collection(db, "posts");
   const q = query(postsRef, orderBy("time", "desc"), limit(50));
   const [posts] = useCollectionData(q);
+
   useEffect(() => {
     console.log("posts", posts);
     // eslint-disable-next-line
@@ -202,16 +229,18 @@ function HomeContent() {
             key={post.id}
             title={post.title}
             content={post.content}
-            authorName={post.authorName}
-            authorPfp={post.authorPfp}
-            time={post.time.toDate().toLocaleString(undefined, {
-              hour: "numeric",
-              minute: "numeric",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            time={
+              post.time &&
+              post.time.toDate().toLocaleString(undefined, {
+                hour: "numeric",
+                minute: "numeric",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            }
             id={post.id}
+            authorId={post.authorId}
           />
         ))}
     </Container>
@@ -223,14 +252,16 @@ function PostCreator() {
   const [buttonDisplay, setButtonDisplay] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [userDoc] = useDocumentOnce(doc(db, "members", auth.currentUser.uid));
   const makePost = () => {
     const docRef = doc(collection(db, "posts"));
     setDoc(docRef, {
       title: title,
       content: content,
-      authorName: auth.currentUser.displayName,
-      authorPfp: auth.currentUser.photoURL,
+      authorName: userDoc.data().name,
+      authorPfp: userDoc.data().pfp,
       time: serverTimestamp(),
+      authorId: auth.currentUser.uid,
       id: docRef.id,
     });
     setEnabled(false);
@@ -314,9 +345,32 @@ function PostCreator() {
 }
 
 function ContentCard(props) {
-  const { title, content, authorName, authorPfp, time, id } = props;
+  const { title, content, time, id, authorId } = props;
   const [showComments, setShowComments] = useState(false);
   const [commentButtonDisplay, setCommentButtonDisplay] = useState("");
+  const [disableButtonDisplay, setDisableButtonDisplay] = useState("");
+  const [userDoc] = useDocumentOnce(doc(db, "members", authorId));
+  const [authorName, setAuthorName] = useState("");
+  const [authorPfp, setAuthorPfp] = useState("");
+
+  useEffect(() => {
+    if (userDoc) {
+      setAuthorName(userDoc.data().name);
+
+      setAuthorPfp(userDoc.data().pfp);
+    }
+  }, [userDoc]);
+
+  useEffect(() => {
+    if (showComments) {
+      setCommentButtonDisplay("none");
+      setDisableButtonDisplay("");
+    } else {
+      setCommentButtonDisplay("");
+      setDisableButtonDisplay("none");
+    }
+  }, [showComments]);
+
   return (
     <>
       <Card sx={{ my: 3 }}>
@@ -333,7 +387,7 @@ function ContentCard(props) {
               label={authorName}
               color="primary"
             />
-            <Chip label={time} color="primary" variant="outlined" />
+            {time && <Chip label={time} color="primary" variant="outlined" />}
             <Button
               onClick={() => {
                 setShowComments(true);
@@ -343,26 +397,27 @@ function ContentCard(props) {
               variant="outlined"
               size="small"
               disableElevation
+              startIcon={<ExpandMoreIcon />}
             >
               Show Comments
+            </Button>
+            <Button
+              sx={{ borderRadius: "16px", display: disableButtonDisplay }}
+              color="error"
+              size="small"
+              variant="outlined"
+              disableElevation
+              onClick={() => {
+                setShowComments(false);
+                setCommentButtonDisplay("");
+              }}
+              startIcon={<ExpandLessIcon />}
+            >
+              Hide Comments
             </Button>
           </Stack>
           <Collapse in={showComments}>
             <Box sx={{ my: 3 }}>
-              <Button
-                sx={{ borderRadius: "16px" }}
-                color="error"
-                size="small"
-                variant="outlined"
-                disableElevation
-                onClick={() => {
-                  setShowComments(false);
-                  setCommentButtonDisplay("");
-                }}
-                endIcon={<CloseIcon />}
-              >
-                Hide Comments
-              </Button>
               <Comments id={id} />
             </Box>
           </Collapse>
@@ -374,7 +429,7 @@ function ContentCard(props) {
 
 function Comments(props) {
   const { id } = props;
-  console.log(id)
+  console.log(id);
   const commentsRef = collection(db, "posts", id, "comments");
   const q = query(commentsRef, orderBy("time", "desc"));
   const [comments] = useCollectionData(q);
@@ -382,18 +437,19 @@ function Comments(props) {
   useEffect(() => {
     console.log(commentsRef);
     console.log("comments", comments);
-  }, [comments]);
+  }, [comments, commentsRef]);
 
   return (
     <Box sx={{ my: 3 }}>
       <Divider sx={{ mb: 3 }} />
+
+      <CreateComment id={id} />
       {comments &&
         comments.map((comment) => (
           <Comment
             key={comment.id}
             content={comment.content}
-            authorName={comment.authorName}
-            authorPfp={comment.authorPfp}
+            authorId={comment.authorId}
             time={
               comment.time &&
               comment.time.toDate().toLocaleString(undefined, {
@@ -404,21 +460,119 @@ function Comments(props) {
                 day: "numeric",
               })
             }
-            id={comment.id && comment.id}
+            id={comment.id}
+            postId={id}
           />
         ))}
     </Box>
   );
 }
 
-function Comment(props) {
-  const { comment, authorName, authorPfp, time } = props;
+function CreateComment(props) {
+  const { id } = props;
+  const [content, setContent] = useState("");
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    if (content.length > 0) {
+      setEnabled(true);
+    } else {
+      setEnabled(false);
+    }
+  }, [content]);
+
+  const makeComment = (id) => {
+    const commentRef = doc(collection(db, "posts", id, "comments"));
+    const comment = {
+      content,
+      time: new Date(),
+      authorId: auth.currentUser.uid,
+      id: commentRef.id,
+    };
+    setDoc(commentRef, comment);
+    setContent("");
+  };
+
   return (
-    <Box sx={{ my: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="body1" gutterBottom>
-          {comment}
-        </Typography>
+    <>
+      <Box>
+        <TextField
+          id="input"
+          label="Comment"
+          rows={1}
+          variant="outlined"
+          fullWidth
+          multiline
+          size="small"
+          onChange={(e) => {
+            setContent(e.target.value);
+          }}
+        />
+        <br />
+
+        <Collapse in={enabled}>
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Button
+              variant="contained"
+              color="success"
+              size="small"
+              disableElevation
+              onClick={() => {
+                makeComment(id);
+                document.getElementById("input").value = "";
+              }}
+            >
+              Comment
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              size="small"
+              disableElevation
+              onClick={() => {
+                setEnabled(false);
+                setContent("");
+                document.getElementById("input").value = "";
+              }}
+            >
+              Cancel
+            </Button>
+          </Stack>
+        </Collapse>
+      </Box>
+    </>
+  );
+}
+
+function Comment(props) {
+  const { content, authorId, time, postId, id } = props;
+  const userId = authorId;
+  const [userDoc] = useDocumentOnce(doc(db, "members", userId));
+  const [authorName, setUserName] = useState("");
+  const [authorPfp, setAvatar] = useState("");
+  const [deleteButton, setDeleteButton] = useState("none");
+
+  const deleteComment = () => {
+    deleteDoc(doc(collection(db, "posts", postId, "comments"), id));
+  };
+
+  useEffect(() => {
+    if (auth.currentUser.uid === authorId) {
+      setDeleteButton("");
+    }
+  }, [authorId]);
+
+  useEffect(() => {
+    if (userDoc) {
+      setUserName(userDoc.data().name);
+      setAvatar(userDoc.data().pfp);
+    }
+  }, [userDoc]);
+
+  return (
+    <Paper sx={{ p: 3, my: 3 }} elevation={0}>
+      <Box sx={{ mb: 2 }}>
+        <ReactMarkdown>{content}</ReactMarkdown>
       </Box>
       <Stack direction="row" spacing={1}>
         <Chip
@@ -427,8 +581,19 @@ function Comment(props) {
           color="primary"
         />
         <Chip label={time} color="primary" variant="outlined" />
+        <Button
+          size="small"
+          color="error"
+          disableElevation
+          variant="outlined"
+          sx={{ borderRadius: "16px", display: deleteButton }}
+          startIcon={<DeleteIcon />}
+          onClick={deleteComment}
+        >
+          Delete Comment
+        </Button>
       </Stack>
-    </Box>
+    </Paper>
   );
 }
 
@@ -446,21 +611,24 @@ function MembersContent() {
   const [members] = useCollectionData(q);
   return (
     <Container>
-      {members &&
-        members.map((member) => (
-          <MemberCard
-            key={member.id}
-            name={member.name}
-            pfp={member.pfp}
-            role={member.role}
-          />
-        ))}
+      <Stack spacing={3}>
+        {members &&
+          members.map((member) => (
+            <MemberCard
+              key={member.id}
+              name={member.name}
+              pfp={member.pfp}
+              role={member.role}
+              desc={member.desc && member.desc}
+            />
+          ))}
+      </Stack>
     </Container>
   );
 }
 
 function MemberCard(props) {
-  let { name, pfp, role } = props;
+  let { name, pfp, role, desc } = props;
   const [color, setColor] = useState("primary");
   const [displayRole, setRole] = useState("Member");
 
@@ -476,19 +644,23 @@ function MemberCard(props) {
     }
   }, [role]);
   return (
-    <Card sx={{ my: 3 }}>
+    <Card>
       <Box sx={{ p: 2, display: "flex" }}>
         <Stack spacing={2} direction="row">
           <Avatar src={pfp} sx={{ width: 69, height: 69 }} />
-          <Box sx={{ p: 2 }}>
+          <Stack sx={{ p: 2 }} spacing={1}>
             <Typography fontWeight={700}>{name}</Typography>
-            <Chip
-              label={displayRole}
-              variant="outlined"
-              size="small"
-              color={color}
-            />
-          </Box>
+
+            <Typography variant="body2">{desc}</Typography>
+            <Box>
+              <Chip
+                label={displayRole}
+                variant="outlined"
+                size="small"
+                color={color}
+              />
+            </Box>
+          </Stack>
         </Stack>
       </Box>
     </Card>
@@ -582,10 +754,12 @@ function ChatContent(props) {
 }
 
 function ChatMessage(props) {
-  const { message, userName, avatar, userId, id, chatRoom, displayTime } =
-    props;
+  const { message, userId, id, chatRoom, displayTime } = props;
   const [buttonDisplay, setButtonDisplay] = useState("none");
   const [hoverState, setHoverState] = useState(false);
+  const [userDoc] = useDocumentOnce(doc(db, "members", userId));
+  const [userName, setUserName] = useState("");
+  const [avatar, setAvatar] = useState("");
 
   useEffect(() => {
     if (userId === auth.currentUser.uid && hoverState) {
@@ -594,6 +768,13 @@ function ChatMessage(props) {
       setButtonDisplay("none");
     }
   }, [userId, hoverState]);
+
+  useEffect(() => {
+    if (userDoc) {
+      setUserName(userDoc.data().name);
+      setAvatar(userDoc.data().pfp);
+    }
+  }, [userDoc]);
 
   const deleteMessage = () => {
     console.log(id);
@@ -627,8 +808,9 @@ function ChatMessage(props) {
               aria-label="fingerprint"
               color="error"
               sx={{ display: buttonDisplay }}
+              onClick={deleteMessage}
             >
-              <ClearIcon fontSize="small" onClick={deleteMessage} />
+              <DeleteIcon fontSize="small" />
             </IconButton>
           </Stack>
           <ReactMarkdown className="md">{message}</ReactMarkdown>
@@ -661,8 +843,6 @@ function PostMessage() {
     const messageRef = doc(collection(db, "chat", chatRoom, "messages"));
     setDoc(messageRef, {
       content: message,
-      authorName: auth.currentUser.displayName,
-      authorAvatar: auth.currentUser.photoURL,
       authorId: auth.currentUser.uid,
       createdAt: serverTimestamp(),
       id: messageRef.id,
@@ -826,11 +1006,16 @@ function ResponsiveDrawer(props) {
         <ListItem button component={Link} href="./members">
           <ListItemText>Members</ListItemText>
         </ListItem>
-        <ListItem button component={Link} href="./about">
-          <ListItemText>About</ListItemText>
-        </ListItem>
+
         <ListItem button component={Link} href="./chat/main">
           <ListItemText>Chat</ListItemText>
+        </ListItem>
+        <Divider sx={{ m: 2 }} />
+        <ListItem button component={Link} href="./settings">
+          <ListItemText>Settings</ListItemText>
+        </ListItem>
+        <ListItem button component={Link} href="./about">
+          <ListItemText>About</ListItemText>
         </ListItem>
       </List>
     </div>
@@ -1031,6 +1216,132 @@ function ResponsiveChatDrawer(props) {
         {content}
       </Box>
     </Box>
+  );
+}
+
+function Settings() {
+  return (
+    <>
+      <ResponsiveDrawer title="Settings" content={<SettingsContent />} />
+    </>
+  );
+}
+
+function SettingsContent() {
+  const [userDoc] = useDocumentData(doc(db, "members", auth.currentUser.uid));
+  const [name, setName] = useState("");
+  const [avatar, setAvatar] = useState("");
+  const [desc, setDesc] = useState("");
+  const [showButtons, setShowButtons] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+
+  const apply = () => {
+    if (newName === "") {
+      setName(name);
+    }
+    if (newDesc === "") {
+      setDesc(desc);
+    }
+    const data = {
+      name: newName,
+      desc: newDesc,
+    };
+    const docRef = doc(db, "members", auth.currentUser.uid);
+    updateDoc(docRef, data);
+  };
+
+  useEffect(() => {
+    if (userDoc) {
+      setName(userDoc.name);
+      setAvatar(userDoc.pfp);
+      if (userDoc.desc) {
+        setDesc(userDoc.desc);
+      }
+    }
+  }, [userDoc]);
+
+  useEffect(() => {
+    console.log(name);
+    console.log(newName);
+    console.log(name === newName);
+    if (newName !== name || newDesc !== desc) {
+      setShowButtons(true);
+    }
+    if (newName === "" || newDesc === "") {
+      setNewName(name);
+      setNewDesc(desc);
+      setShowButtons(false);
+    }
+  }, [name, newName, newDesc, desc]);
+
+  return (
+    <>
+      <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
+        Profile Customization
+      </Typography>
+      <Card>
+        <Box sx={{ p: 3 }}>
+          <Stack direction="row" spacing={2}>
+            <Stack spacing={1}>
+              <Avatar src={avatar} sx={{ height: "120px", width: "120px" }} />
+            </Stack>
+            <Stack spacing={2} sx={{ width: "100%" }}>
+              <TextField
+                id="name"
+                label="Name"
+                variant="outlined"
+                size="small"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                multiline
+                rows={1}
+                defaultValue={name}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+              />
+              <TextField
+                id="desc"
+                label="Description"
+                variant="outlined"
+                multiline
+                rows={4}
+                size="small"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                defaultValue={desc}
+                onChange={(e) => setNewDesc(e.target.value)}
+              />
+
+              <Box>
+                <Collapse in={showButtons}>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disableElevation
+                      color="success"
+                      onClick={apply}
+                    >
+                      Apply
+                    </Button>
+                  </Stack>
+                </Collapse>
+              </Box>
+            </Stack>
+          </Stack>
+        </Box>
+      </Card>
+      <Typography variant="h5" component="h2" sx={{ my: 3 }}>
+        Profile Preview
+      </Typography>
+      <MemberCard name={name} desc={desc} pfp={avatar} />
+    </>
   );
 }
 

@@ -4,3 +4,5 @@
 - Allow making custom groups
 - Make scrolling to let more messages to load
 - Notification support
+- Comments for posts
+- Customizing profile
