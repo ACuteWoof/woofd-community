@@ -34,9 +34,10 @@ import {
   useDocumentData,
 } from "react-firebase-hooks/firestore";
 
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -55,7 +56,9 @@ import CardContent from "@mui/material/CardContent";
 import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
+import Badge from "@mui/material/Badge";
 import AddIcon from "@mui/icons-material/Add";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
 import Collapse from "@mui/material/Collapse";
 import TextField from "@mui/material/TextField";
@@ -1248,6 +1251,7 @@ function SettingsContent() {
   const [showButtons, setShowButtons] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [newAvatar, setNewAvatar] = useState("");
 
   const apply = () => {
     if (newName === "") {
@@ -1259,6 +1263,7 @@ function SettingsContent() {
     const data = {
       name: newName.substring(0, 225),
       desc: newDesc.substring(0, 225),
+      pfp: newAvatar,
     };
     const docRef = doc(db, "members", auth.currentUser.uid);
     updateDoc(docRef, data);
@@ -1288,6 +1293,21 @@ function SettingsContent() {
     }
   }, [name, newName, newDesc, desc]);
 
+  const upload = (e) => {
+    const storage = getStorage();
+    const file = e.target.files[0];
+    console.log(file);
+    const profileRef = ref(
+      storage,
+      `Profile/${auth.currentUser.uid}/avatar.png`
+    );
+    uploadBytes(profileRef, file);
+    getDownloadURL(profileRef).then((url) => {
+      setNewAvatar(url);
+      console.log(url);
+    });
+  };
+
   return (
     <>
       <Typography variant="h5" component="h2" sx={{ mb: 3 }}>
@@ -1297,7 +1317,32 @@ function SettingsContent() {
         <Box sx={{ p: 3 }}>
           <Stack direction="row" spacing={2}>
             <Stack spacing={1}>
-              <Avatar src={avatar} sx={{ height: "120px", width: "120px" }} />
+              <Badge
+                overlap="circular"
+                anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+                badgeContent={
+                  <Box>
+                    <input
+                      component="input"
+                      type="file"
+                      onChange={upload}
+                      className="infile"
+                      id="infile"
+                      onClick={upload}
+                    />
+                    <IconButton
+                      color="primary"
+                      onClick={() => {
+                        document.getElementById("infile").click();
+                      }}
+                    >
+                      <AddCircleIcon />
+                    </IconButton>
+                  </Box>
+                }
+              >
+                <Avatar src={avatar} sx={{ height: "120px", width: "120px" }} />
+              </Badge>
             </Stack>
             <Stack spacing={2} sx={{ width: "100%" }}>
               <TextField
