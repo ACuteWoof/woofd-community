@@ -6,3 +6,4 @@
 - [] Notification support
 - [x] Comments for posts
 - [x] Customizing profile
+	- [] Custom profile pic support
