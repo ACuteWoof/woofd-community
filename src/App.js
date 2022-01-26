@@ -159,11 +159,24 @@ function Loading() {
       <Grid
         spacing={3}
         direction="column"
+        container
         justifyContent="center"
         alignItems="center"
-        sx={{ textAlign: "center", height: "100%" }}
+        sx={{
+          textAlign: "center",
+          margin: 0,
+          height: "100vh",
+          width: "100vw",
+          backgroundImage: `url('${wall}')`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
       >
-        <CircularProgress />
+        <CircularProgress color="success" />
+        <Typography variant="h6" sx={{ my: 1 }}>
+          Loading...
+        </Typography>
       </Grid>
     </>
   );
