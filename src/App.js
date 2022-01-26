@@ -1244,8 +1244,8 @@ function SettingsContent() {
       setDesc(desc);
     }
     const data = {
-      name: newName,
-      desc: newDesc,
+      name: newName.substring(0, 225),
+      desc: newDesc.substring(0, 225),
     };
     const docRef = doc(db, "members", auth.currentUser.uid);
     updateDoc(docRef, data);
