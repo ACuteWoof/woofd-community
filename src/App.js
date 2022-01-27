@@ -729,20 +729,39 @@ let chatDrawerWidth = 240;
 function ChatContent(props) {
   const { chatRoom } = props;
   const messagesRef = collection(db, "chat", chatRoom, "messages");
-  const q = query(messagesRef, orderBy("createdAt"), limit(50));
+  const q = query(messagesRef, orderBy("createdAt", "desc"), limit(50));
   const [messages] = useCollectionData(q);
+  const [existMsgs, setExistMsgs] = useState([]);
   const dummy = useRef();
 
   useEffect(() => {
+    console.log(document.hasFocus());
     dummy.current.scrollIntoView({ behavior: "smooth" });
-  });
+    if (existMsgs.length === 0 && messages) {
+      setExistMsgs(messages.slice());
+      console.log(existMsgs);
+    }
+    if (messages) {
+      console.log(messages.length);
+      console.log(existMsgs.length);
+    }
+    if (messages && document.hasFocus() === false) {
+      Notification.requestPermission().then(function (result) {
+        if (result === "granted") {
+          let notification = new Notification(chatRoom, {
+            body: messages.reverse()[0].content,
+          });
+        }
+      });
+    }
+  }, [messages]);
 
   return (
     <>
       <Container fixed sx={{ width: "100%", pb: "30px", m: 0 }}>
         <Stack direction="column" spacing={2}>
           {messages &&
-            messages.map((message) => (
+            messages.reverse().map((message) => (
               <ChatMessage
                 key={message.id}
                 message={message.content}
