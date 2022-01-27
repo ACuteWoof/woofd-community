@@ -57,6 +57,8 @@ import Avatar from "@mui/material/Avatar";
 import Chip from "@mui/material/Chip";
 import Stack from "@mui/material/Stack";
 import Badge from "@mui/material/Badge";
+import LoadingButton from "@mui/lab/LoadingButton";
+import DoneIcon from "@mui/icons-material/Done";
 import AddIcon from "@mui/icons-material/Add";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import Paper from "@mui/material/Paper";
@@ -1249,24 +1251,50 @@ function SettingsContent() {
   const [avatar, setAvatar] = useState("");
   const [desc, setDesc] = useState("");
   const [showButtons, setShowButtons] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
+  const [file, setFile] = useState(null);
   const [newAvatar, setNewAvatar] = useState("");
 
   const apply = () => {
+    const storage = getStorage();
     if (newName === "") {
       setName(name);
     }
     if (newDesc === "") {
       setDesc(desc);
     }
-    const data = {
-      name: newName.substring(0, 225),
-      desc: newDesc.substring(0, 225),
-      pfp: newAvatar,
-    };
-    const docRef = doc(db, "members", auth.currentUser.uid);
-    updateDoc(docRef, data);
+    const profileRef = ref(
+      storage,
+      `Profile/${auth.currentUser.uid}/avatar.${file.name.split(".").pop()}`
+    );
+    if (file) {
+      uploadBytes(profileRef, file);
+      setShowLoading(true);
+      getDownloadURL(profileRef).then((url) => {
+        setShowLoading(false);
+        setShowButtons(true);
+        console.log(url);
+        setNewAvatar(url);
+        console.log(newAvatar);
+        const data = {
+          name: newName.substring(0, 225),
+          desc: newDesc.substring(0, 225),
+          pfp: newAvatar,
+        };
+        const docRef = doc(db, "members", auth.currentUser.uid);
+        updateDoc(docRef, data);
+      });
+    } else {
+      const data = {
+        name: newName.substring(0, 225),
+        desc: newDesc.substring(0, 225),
+        pfp: newAvatar,
+      };
+      const docRef = doc(db, "members", auth.currentUser.uid);
+      updateDoc(docRef, data);
+    }
   };
 
   useEffect(() => {
@@ -1294,19 +1322,10 @@ function SettingsContent() {
   }, [name, newName, newDesc, desc]);
 
   const upload = (e) => {
-    const storage = getStorage();
     const file = e.target.files[0];
     console.log(file);
-    const profileRef = ref(
-      storage,
-      `Profile/${auth.currentUser.uid}/avatar.${file.name.split(".").pop()}`
-    );
-    uploadBytes(profileRef, file);
-    getDownloadURL(profileRef).then((url) => {
-      setNewAvatar(url);
-      setShowButtons(true);
-      console.log(url);
-    });
+    setShowButtons(true);
+    setFile(file);
   };
 
   return (
@@ -1378,7 +1397,7 @@ function SettingsContent() {
               />
 
               <Box>
-                <Collapse in={showButtons}>
+                {showButtons && !showLoading && (
                   <Stack direction="row" spacing={1}>
                     <Button
                       variant="contained"
@@ -1386,11 +1405,25 @@ function SettingsContent() {
                       disableElevation
                       color="success"
                       onClick={apply}
+                      startIcon={<DoneIcon />}
                     >
                       Apply
                     </Button>
                   </Stack>
-                </Collapse>
+                )}
+                {showLoading && (
+                  <LoadingButton
+                    loading
+                    loadingPosition="start"
+                    variant="contained"
+                    size="small"
+                    disableElevation
+                    color="success"
+                    startIcon={<DoneIcon />}
+                  >
+                    Apply
+                  </LoadingButton>
+                )}
               </Box>
             </Stack>
           </Stack>
