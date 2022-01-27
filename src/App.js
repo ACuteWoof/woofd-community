@@ -663,10 +663,10 @@ function MemberCard(props) {
   }, [role]);
   return (
     <Card>
-      <Box sx={{ p: 2, display: "flex" }}>
+      <Box sx={{ p: 4, display: "flex" }}>
         <Stack spacing={2} direction="row">
           <Avatar src={pfp} sx={{ width: 69, height: 69 }} />
-          <Stack sx={{ p: 2 }} spacing={1}>
+          <Stack sx={{ p: 0 }} spacing={1}>
             <Typography fontWeight={700}>{name}</Typography>
 
             <Typography variant="body2">{desc}</Typography>
@@ -1432,6 +1432,13 @@ function SettingsContent() {
       <Typography variant="h5" component="h2" sx={{ my: 3 }}>
         Profile Preview
       </Typography>
+	  <Typography variant="body1" component="p" sx={{ mb: 3 }}>
+	  Live Preview
+	  </Typography>
+      <MemberCard name={newName} desc={newDesc} pfp={newAvatar} />
+	  <Typography variant="body1" component="p" sx={{ mb: 3 }}>
+	  Server Preview (What it looks like to others right now)
+	  </Typography>
       <MemberCard name={name} desc={desc} pfp={avatar} />
     </>
   );
