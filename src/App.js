@@ -1299,11 +1299,12 @@ function SettingsContent() {
     console.log(file);
     const profileRef = ref(
       storage,
-      `Profile/${auth.currentUser.uid}/avatar.png`
+      `Profile/${auth.currentUser.uid}/avatar.${file.name.split(".").pop()}`
     );
     uploadBytes(profileRef, file);
     getDownloadURL(profileRef).then((url) => {
       setNewAvatar(url);
+      setShowButtons(true);
       console.log(url);
     });
   };
