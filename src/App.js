@@ -1314,9 +1314,14 @@ function SettingsContent() {
     if (newName !== name || newDesc !== desc) {
       setShowButtons(true);
     }
-    if (newName === "" || newDesc === "") {
+    if (newName === "" || newDesc === "" || newAvatar === "") {
       setNewName(name);
-      setNewDesc(desc);
+      if (newDesc === "") {
+        setNewDesc(desc);
+      }
+      if (newAvatar === "") {
+        setNewAvatar(avatar);
+      }
       setShowButtons(false);
     }
   }, [name, newName, newDesc, desc]);
@@ -1432,13 +1437,13 @@ function SettingsContent() {
       <Typography variant="h5" component="h2" sx={{ my: 3 }}>
         Profile Preview
       </Typography>
-	  <Typography variant="body1" component="p" sx={{ mb: 3 }}>
-	  Live Preview
-	  </Typography>
+      <Typography variant="body1" component="p" sx={{ mt: 3 }}>
+        Live Preview
+      </Typography>
       <MemberCard name={newName} desc={newDesc} pfp={newAvatar} />
-	  <Typography variant="body1" component="p" sx={{ mb: 3 }}>
-	  Server Preview (What it looks like to others right now)
-	  </Typography>
+      <Typography variant="body1" component="p" sx={{ mt: 3 }}>
+        Server Preview (What it looks like to others right now)
+      </Typography>
       <MemberCard name={name} desc={desc} pfp={avatar} />
     </>
   );
