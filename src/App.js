@@ -193,7 +193,7 @@ function UserInintializer() {
   );
   useEffect(() => {
     console.log("auth triggered");
-    if (!userDoc && !loading) {
+    if (!userDoc) {
       if (auth.currentUser.uid === "ATLdbZiL1pSHx0PG3JAc9o6Zveq1") {
         setDoc(
           doc(db, "members", auth.currentUser.uid),
@@ -204,7 +204,7 @@ function UserInintializer() {
           },
           { merge: true }
         );
-      }
+       } else {
       setDoc(
         doc(db, "members", auth.currentUser.uid),
         {
@@ -213,6 +213,7 @@ function UserInintializer() {
         },
         { merge: true }
       );
+       }
     }
     // eslint-disable-next-line
   }, [auth, userDoc, loading, error]);
@@ -748,13 +749,13 @@ function ChatContent(props) {
     if (messages && document.hasFocus() === false) {
       Notification.requestPermission().then(function (result) {
         if (result === "granted") {
-          let notification = new Notification(chatRoom, {
+          new Notification(chatRoom, {
             body: messages.reverse()[0].content,
           });
         }
       });
     }
-  }, [messages]);
+  }, [messages, chatRoom, existMsgs]);
 
   return (
     <>
@@ -1343,7 +1344,7 @@ function SettingsContent() {
       }
       setShowButtons(false);
     }
-  }, [name, newName, newDesc, desc]);
+  }, [name, newName, newDesc, desc, avatar, newAvatar]);
 
   const upload = (e) => {
     const file = e.target.files[0];
