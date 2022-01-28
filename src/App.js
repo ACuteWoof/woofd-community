@@ -764,7 +764,7 @@ function ChatContent(props) {
         }
       });
     }
-  }, [messages, chatRoom, existMsgs]);
+  }, [messages, chatRoom, existMsgs, reverseMessages]);
 
   return (
     <>
