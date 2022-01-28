@@ -763,7 +763,7 @@ function ChatContent(props) {
       <Container fixed sx={{ width: "100%", pb: "30px", m: 0 }}>
         <Stack direction="column" spacing={2}>
           {messages &&
-            messages.map((message) => (
+            messages.reverse().map((message) => (
               <ChatMessage
                 key={message.id}
                 message={message.content}
