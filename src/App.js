@@ -733,6 +733,7 @@ function ChatContent(props) {
   const q = query(messagesRef, orderBy("createdAt", "desc"), limit(50));
   const [messages] = useCollectionData(q);
   const [existMsgs, setExistMsgs] = useState([]);
+	const [reverseMessages, setReverseMessages] = useState([]);
   const dummy = useRef();
 
   useEffect(() => {
@@ -746,6 +747,13 @@ function ChatContent(props) {
       console.log(messages.length);
 	    console.log(messages)
       console.log(existMsgs.length);
+	    try {
+	    setReverseMessages(messages.reverse())
+	    }
+	    catch(err) {
+		    console.log(err)
+	    }
+	    console.log(reverseMessages)
     }
     if (messages && document.hasFocus() === false) {
       Notification.requestPermission().then(function (result) {
@@ -762,8 +770,8 @@ function ChatContent(props) {
     <>
       <Container fixed sx={{ width: "100%", pb: "30px", m: 0 }}>
         <Stack direction="column" spacing={2}>
-          {messages &&
-            messages.reverse().map((message) => (
+          {reverseMessages &&
+            reverseMessages.map((message) => (
               <ChatMessage
                 key={message.id}
                 message={message.content}
