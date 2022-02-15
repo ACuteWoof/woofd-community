@@ -3,9 +3,6 @@ import woofverse from "./woofverse.png";
 import wall from "./wall.svg";
 import "./MarkdownStyles.css";
 
-import { CallScreen, CreateCallButton } from "./Call";
-import Peer from "peerjs";
-
 import { useState, useEffect, useRef } from "react";
 
 import {
@@ -74,10 +71,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import GoogleIcon from "@mui/icons-material/Google";
 import CircularProgress from "@mui/material/CircularProgress";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import CallIcon from "@mui/icons-material/Call";
 
 import ReactMarkdown from "react-markdown";
 
@@ -152,7 +146,6 @@ function App() {
               <Route path="/members" element={<Members />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/chat/:chatRoom" element={<Chat />} />
-              <Route path="/vc" element={<Call />} />
               <Route path="/about" element={<About />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
@@ -211,16 +204,16 @@ function UserInintializer() {
           },
           { merge: true }
         );
-      } else {
-        setDoc(
-          doc(db, "members", auth.currentUser.uid),
-          {
-            name: auth.currentUser.displayName,
-            pfp: auth.currentUser.photoURL,
-          },
-          { merge: true }
-        );
-      }
+       } else {
+      setDoc(
+        doc(db, "members", auth.currentUser.uid),
+        {
+          name: auth.currentUser.displayName,
+          pfp: auth.currentUser.photoURL,
+        },
+        { merge: true }
+      );
+       }
     }
     // eslint-disable-next-line
   }, [auth, userDoc, loading, error]);
@@ -740,7 +733,7 @@ function ChatContent(props) {
   const q = query(messagesRef, orderBy("createdAt", "desc"), limit(50));
   const [messages] = useCollectionData(q);
   const [existMsgs, setExistMsgs] = useState([]);
-  const [reverseMessages, setReverseMessages] = useState([]);
+	const [reverseMessages, setReverseMessages] = useState([]);
   const dummy = useRef();
 
   useEffect(() => {
@@ -752,24 +745,25 @@ function ChatContent(props) {
     }
     if (messages) {
       console.log(messages.length);
-      console.log(messages);
+	    console.log(messages)
       console.log(existMsgs.length);
-      try {
-        setReverseMessages(messages.reverse());
-      } catch (err) {
-        console.log(err);
-      }
-      console.log(reverseMessages);
+	    try {
+	    setReverseMessages(messages.reverse())
+	    }
+	    catch(err) {
+		    console.log(err)
+	    }
+	    console.log(reverseMessages)
     }
-    // if (messages && document.hasFocus() === false) {
-    //   Notification.requestPermission().then(function (result) {
-    //     if (result === "granted") {
-    //       new Notification(chatRoom, {
-    //         body: messages.reverse()[0].content,
-    //       });
-    //     }
-    //   });
-    // }
+    if (messages && document.hasFocus() === false) {
+      Notification.requestPermission().then(function (result) {
+        if (result === "granted") {
+          new Notification(chatRoom, {
+            body: messages.reverse()[0].content,
+          });
+        }
+      });
+    }
   }, [messages, chatRoom, existMsgs, reverseMessages]);
 
   return (
@@ -807,14 +801,12 @@ function ChatContent(props) {
 }
 
 function ChatMessage(props) {
-  const { message, userId, id, chatRoom, displayTime, peer } = props;
+  const { message, userId, id, chatRoom, displayTime } = props;
   const [buttonDisplay, setButtonDisplay] = useState("none");
   const [hoverState, setHoverState] = useState(false);
   const [userDoc] = useDocumentOnce(doc(db, "members", userId));
   const [userName, setUserName] = useState("");
   const [avatar, setAvatar] = useState("");
-  const [openMenu, setOpenMenu] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
 
   useEffect(() => {
     if (userId === auth.currentUser.uid && hoverState) {
@@ -847,60 +839,7 @@ function ChatMessage(props) {
       }}
     >
       <Stack direction="row" spacing={2} sx={{ m: 0 }}>
-        <Box>
-          <Avatar
-            src={avatar}
-            onClick={(event) => {
-              setOpenMenu(true);
-              setAnchorEl(event.currentTarget);
-            }}
-          />
-          <Menu
-            id="basic-menu"
-            anchorEl={anchorEl}
-            open={openMenu}
-            onClose={() => {
-              setOpenMenu(false);
-            }}
-            MenuListProps={{
-              "aria-labelledby": "basic-button",
-            }}
-            PaperProps={{
-              elevation: 0,
-              sx: {
-                overflow: "visible",
-                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-                mt: 1.5,
-                "& .MuiAvatar-root": {
-                  width: 32,
-                  height: 32,
-                  ml: -0.5,
-                  mr: 1,
-                },
-                "&:before": {
-                  content: '""',
-                  display: "block",
-                  position: "absolute",
-                  top: 0,
-                  left: 14,
-                  width: 10,
-                  height: 10,
-                  bgcolor: "background.paper",
-                  transform: "translateY(-50%) rotate(45deg)",
-                  zIndex: 0,
-                },
-              },
-            }}
-          >
-            <CreateCallButton peerId={userId} selfId={auth.currentUser.uid}>
-              <MenuItem>
-                <CallIcon />
-                <Typography variant="body2">Call</Typography>
-              </MenuItem>
-            </CreateCallButton>
-          </Menu>
-        </Box>
-
+        <Avatar src={avatar} />
         <Box>
           <Stack direction="row" spacing={2}>
             <Typography variant="h6" gutterBottom>
@@ -1355,11 +1294,11 @@ function SettingsContent() {
     if (newDesc === "") {
       setDesc(desc);
     }
+    const profileRef = ref(
+      storage,
+      `Profile/${auth.currentUser.uid}/avatar.${file.name.split(".").pop()}`
+    );
     if (file) {
-      const profileRef = ref(
-        storage,
-        `Profile/${auth.currentUser.uid}/avatar.${file.name.split(".").pop()}`
-      );
       uploadBytes(profileRef, file);
       setShowLoading(true);
       getDownloadURL(profileRef).then((url) => {
@@ -1535,16 +1474,6 @@ function SettingsContent() {
         Server Preview (What it looks like to others right now)
       </Typography>
       <MemberCard name={name} desc={desc} pfp={avatar} />
-    </>
-  );
-}
-
-function Call() {
-  return (
-    <>
-      <ThemeProvider />
-      <CssBaseline />
-      <CallScreen />
     </>
   );
 }
