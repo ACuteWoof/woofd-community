@@ -204,16 +204,16 @@ function UserInintializer() {
           },
           { merge: true }
         );
-       } else {
-      setDoc(
-        doc(db, "members", auth.currentUser.uid),
-        {
-          name: auth.currentUser.displayName,
-          pfp: auth.currentUser.photoURL,
-        },
-        { merge: true }
-      );
-       }
+      } else {
+        setDoc(
+          doc(db, "members", auth.currentUser.uid),
+          {
+            name: auth.currentUser.displayName,
+            pfp: auth.currentUser.photoURL,
+          },
+          { merge: true }
+        );
+      }
     }
     // eslint-disable-next-line
   }, [auth, userDoc, loading, error]);
@@ -733,7 +733,7 @@ function ChatContent(props) {
   const q = query(messagesRef, orderBy("createdAt", "desc"), limit(50));
   const [messages] = useCollectionData(q);
   const [existMsgs, setExistMsgs] = useState([]);
-	const [reverseMessages, setReverseMessages] = useState([]);
+  const [reverseMessages, setReverseMessages] = useState([]);
   const dummy = useRef();
 
   useEffect(() => {
@@ -745,15 +745,14 @@ function ChatContent(props) {
     }
     if (messages) {
       console.log(messages.length);
-	    console.log(messages)
+      console.log(messages);
       console.log(existMsgs.length);
-	    try {
-	    setReverseMessages(messages.reverse())
-	    }
-	    catch(err) {
-		    console.log(err)
-	    }
-	    console.log(reverseMessages)
+      try {
+        setReverseMessages(messages.reverse());
+      } catch (err) {
+        console.log(err);
+      }
+      console.log(reverseMessages);
     }
     if (messages && document.hasFocus() === false) {
       Notification.requestPermission().then(function (result) {
@@ -1294,11 +1293,11 @@ function SettingsContent() {
     if (newDesc === "") {
       setDesc(desc);
     }
-    const profileRef = ref(
-      storage,
-      `Profile/${auth.currentUser.uid}/avatar.${file.name.split(".").pop()}`
-    );
     if (file) {
+      const profileRef = ref(
+        storage,
+        `Profile/${auth.currentUser.uid}/avatar.${file.name.split(".").pop()}`
+      );
       uploadBytes(profileRef, file);
       setShowLoading(true);
       getDownloadURL(profileRef).then((url) => {
